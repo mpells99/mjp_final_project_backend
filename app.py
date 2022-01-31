@@ -1,4 +1,5 @@
-from flask import Flask
+from enum import unique
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 import os
@@ -12,23 +13,69 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
 
-class Guide(db.Model):
+class CalendarInfo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), unique=False)
-    content = db.Column(db.String(144), unique=False)
+    calDate = db.Column(db.String(25), unique=False)
+    calDateOptions = db.Column(db.String(25), unique=False)
+    booked = db.Column(db.String(144), unique=False)
 
-    def __init__(self, title, content):
-        self.title = title
-        self.content = content
+    def __init__(self, calDate, calDateOptions, booked):
+        self.calDate = calDate
+        self.calDateOptions = calDateOptions
+        self.booked = booked
 
 
-class GuideSchema(ma.Schema):
+class CalendarInfoSchema(ma.Schema):
     class Meta:
-        fields = ('title', 'content')
+        fields = ('calDate', 'calDateOptions', 'booked')
 
 
-guide_schema = GuideSchema()
-guides_schema = GuideSchema(many=True)
+calendarInfo_schema = CalendarInfoSchema()
+calendarInfos_schema = CalendarInfoSchema(many=True)
+
+db.create_all()
+
+# Endpoint to create a new calendarInfo
+
+
+@app.route('/calendarInfo', methods=["POST"])
+def add_calendarInfo():
+    calDate = request.json['calDate']
+    calDateOptions = request.json['calDateOptions']
+    booked = request.json['booked']
+
+    new_calendarInfo = CalendarInfo(calDate, calDateOptions, booked)
+
+    db.session.add(new_calendarInfo)
+    db.session.commit()
+
+    calendarInfo = CalendarInfo.query.get(new_calendarInfo.id)
+
+    return calendarInfo_schema.jsonify(calendarInfo)
+
+
+# Endpoint to query all guides
+@app.route("/calendars", methods=["GET"])
+def get_calendars():
+    all_calendars = CalendarInfo.query.all()
+    result = calendarInfos_schema.dump(all_calendars)
+    return jsonify(result)
+
+
+# Endpoint for querying a single calendar
+
+@app.route("/calendar/<id>", methods=["GET"])
+def get_calendar(id):
+    calendar = CalendarInfo.query.get(id)
+    return calendarInfo_schema.jsonify(calendar)
+
+
+@app.route('/query-example', methods=["GET"])
+def query_example():
+    # if key doesn't exist, returns None
+    language = request.args.get('language')
+
+    return '''<h1>The language value is: {}</h1>'''.format(language)
 
 
 if __name__ == '__main__':
