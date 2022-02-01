@@ -13,69 +13,64 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
 
-class CalendarInfo(db.Model):
+class Calendar(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    calDate = db.Column(db.String(25), unique=False)
+    calDate = db.Column(db.String(40), unique=False)
+    calDateId = db.Column(db.Integer, unique=True)
     calDateOptions = db.Column(db.String(25), unique=False)
     booked = db.Column(db.String(144), unique=False)
 
-    def __init__(self, calDate, calDateOptions, booked):
+    def __init__(self, calDate, calDateId, calDateOptions, booked):
         self.calDate = calDate
+        self.calDateId = calDateId
         self.calDateOptions = calDateOptions
         self.booked = booked
 
 
-class CalendarInfoSchema(ma.Schema):
+class CalendarSchema(ma.Schema):
     class Meta:
-        fields = ('calDate', 'calDateOptions', 'booked')
+        fields = ('calDate', 'calDateId', 'calDateOptions', 'booked')
 
 
-calendarInfo_schema = CalendarInfoSchema()
-calendarInfos_schema = CalendarInfoSchema(many=True)
+calendarInfo_schema = CalendarSchema()
+calendarInfos_schema = CalendarSchema(many=True)
 
 db.create_all()
 
-# Endpoint to create a new calendarInfo
+# Endpoint to create a new calendar
 
 
-@app.route('/calendarInfo', methods=["POST"])
-def add_calendarInfo():
+@app.route('/calendar', methods=["POST"])
+def add_calendar():
     calDate = request.json['calDate']
+    calDateId = request.json['calDateId']
     calDateOptions = request.json['calDateOptions']
     booked = request.json['booked']
 
-    new_calendarInfo = CalendarInfo(calDate, calDateOptions, booked)
+    new_calendar = Calendar(calDate, calDateId, calDateOptions, booked)
 
-    db.session.add(new_calendarInfo)
+    db.session.add(new_calendar)
     db.session.commit()
 
-    calendarInfo = CalendarInfo.query.get(new_calendarInfo.id)
+    calendar = Calendar.query.get(new_calendar.id)
 
-    return calendarInfo_schema.jsonify(calendarInfo)
+    return calendarInfo_schema.jsonify(calendar)
 
 
-# Endpoint to query all guides
-@app.route("/calendars", methods=["GET"])
+# Endpoint to query all calendars
+@app.route("/calendarInfos", methods=["GET"])
 def get_calendars():
-    all_calendars = CalendarInfo.query.all()
+    all_calendars = Calendar.query.all()
     result = calendarInfos_schema.dump(all_calendars)
     return jsonify(result)
 
 
 # Endpoint for querying a single calendar
 
-@app.route("/calendar/<id>", methods=["GET"])
+@app.route("/calendarInfo/<id>", methods=["GET"])
 def get_calendar(id):
-    calendar = CalendarInfo.query.get(id)
+    calendar = Calendar.query.get(id)
     return calendarInfo_schema.jsonify(calendar)
-
-
-@app.route('/query-example', methods=["GET"])
-def query_example():
-    # if key doesn't exist, returns None
-    language = request.args.get('language')
-
-    return '''<h1>The language value is: {}</h1>'''.format(language)
 
 
 if __name__ == '__main__':
