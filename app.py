@@ -73,11 +73,21 @@ def get_calendar(id):
     return calendarInfo_schema.jsonify(calendar)
 
 
-# @app.route("/calendarInfo/<calDateId>", methods=["GET"])
-# def get_calendar(calDateId):
-#     calendar = Calendar.query.get(calDateId)
-#     print(calendar)
-#     return calendarInfo_schema.jsonify(calendar)
+@app.route('/calendarUpdate/<id>', methods=["PUT"])
+def calendar_update(id):
+    calendar = Calendar.query.get(id)
+    id = request.json['id']
+    calDate = request.json['calDate']
+    calDateOptions = request.json['calDateOptions']
+    booked = request.json['booked']
+
+    calendar.id = id
+    calendar.calDate = calDate
+    calendar.calDateOptions = calDateOptions
+    calendar.booked = booked
+
+    db.session.commit()
+    return calendarInfo_schema.jsonify(calendar)
 
 
 if __name__ == '__main__':
