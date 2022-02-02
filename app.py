@@ -90,5 +90,14 @@ def calendar_update(id):
     return calendarInfo_schema.jsonify(calendar)
 
 
+@app.route("/calendarDelete/<id>", methods=["DELETE"])
+def calendar_delete(id):
+    calendar = Calendar.query.get(id)
+    db.session.delete(calendar)
+    db.session.commit()
+
+    return "Calendar was successfully deleted"
+
+
 if __name__ == '__main__':
     app.run(debug=True)
