@@ -16,20 +16,20 @@ ma = Marshmallow(app)
 class Calendar(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     calDate = db.Column(db.String(40), unique=False)
-    calDateId = db.Column(db.Integer, unique=True)
+    # calDateId = db.Column(db.Integer, primary_key=True)
     calDateOptions = db.Column(db.String(25), unique=False)
     booked = db.Column(db.String(144), unique=False)
 
-    def __init__(self, calDate, calDateId, calDateOptions, booked):
+    def __init__(self, calDate, id, calDateOptions, booked):
         self.calDate = calDate
-        self.calDateId = calDateId
+        self.id = id
         self.calDateOptions = calDateOptions
         self.booked = booked
 
 
 class CalendarSchema(ma.Schema):
     class Meta:
-        fields = ('calDate', 'calDateId', 'calDateOptions', 'booked')
+        fields = ('calDate', 'id', 'calDateOptions', 'booked')
 
 
 calendarInfo_schema = CalendarSchema()
@@ -43,11 +43,11 @@ db.create_all()
 @app.route('/calendar', methods=["POST"])
 def add_calendar():
     calDate = request.json['calDate']
-    calDateId = request.json['calDateId']
+    id = request.json['id']
     calDateOptions = request.json['calDateOptions']
     booked = request.json['booked']
 
-    new_calendar = Calendar(calDate, calDateId, calDateOptions, booked)
+    new_calendar = Calendar(calDate, id, calDateOptions, booked)
 
     db.session.add(new_calendar)
     db.session.commit()
@@ -71,6 +71,13 @@ def get_calendars():
 def get_calendar(id):
     calendar = Calendar.query.get(id)
     return calendarInfo_schema.jsonify(calendar)
+
+
+# @app.route("/calendarInfo/<calDateId>", methods=["GET"])
+# def get_calendar(calDateId):
+#     calendar = Calendar.query.get(calDateId)
+#     print(calendar)
+#     return calendarInfo_schema.jsonify(calendar)
 
 
 if __name__ == '__main__':
