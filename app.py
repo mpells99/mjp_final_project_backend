@@ -1,102 +1,63 @@
-from enum import unique
 from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
+from flask_mongoengine import *
 from flask_marshmallow import Marshmallow
-import os
+
 
 app = Flask(__name__)
-
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
-    os.path.join(basedir, 'app.sqlite')
-db = SQLAlchemy(app)
+db = MongoEngine(app)
 ma = Marshmallow(app)
+db.disconnect()
+db.connect(host="mongodb://127.0.0.1:27017/capstone-project")
 
 
-class Calendar(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    calDate = db.Column(db.String(40), unique=False)
-    # calDateId = db.Column(db.Integer, primary_key=True)
-    calDateOptions = db.Column(db.String(25), unique=False)
-    booked = db.Column(db.String(144), unique=False)
+class Calendar(db.DynamicDocument):
+    calDateid = db.StringField(max_length=50)
+    calDate = db.StringField(max_length=50)
+    calDateOptions = db.StringField(max_length=50)
+    booked = db.StringField(max_length=50)
 
-    def __init__(self, calDate, id, calDateOptions, booked):
+    # def __init__(self, calDate, calDateID, calDateOptions, booked):
+    #     self.calDate = calDate
+    #     self.calDateID = calDateID
+    #     self.calDateOptions = calDateOptions
+    #     self.booked = booked
+    def __init__(self, calDate, calDateID, calDateOptions, booked) -> None:
+        super().__init__()
         self.calDate = calDate
-        self.id = id
+        self.calDateID = calDateID
         self.calDateOptions = calDateOptions
         self.booked = booked
 
 
 class CalendarSchema(ma.Schema):
     class Meta:
-        fields = ('calDate', 'id', 'calDateOptions', 'booked')
+        fields = ('calDate', 'calDateID', 'calDateOptions', 'booked')
 
 
 calendarInfo_schema = CalendarSchema()
 calendarInfos_schema = CalendarSchema(many=True)
 
-db.create_all()
 
-# Endpoint to create a new calendar
+# db.create()
+
+# create
 
 
 @app.route('/calendar', methods=["POST"])
 def add_calendar():
-    calDate = request.json['calDate']
-    id = request.json['id']
-    calDateOptions = request.json['calDateOptions']
-    booked = request.json['booked']
-
-    new_calendar = Calendar(calDate, id, calDateOptions, booked)
-
-    db.session.add(new_calendar)
-    db.session.commit()
-
-    calendar = Calendar.query.get(new_calendar.id)
-
-    return calendarInfo_schema.jsonify(calendar)
-
-
-# Endpoint to query all calendars
-@app.route("/calendarInfos", methods=["GET"])
-def get_calendars():
-    all_calendars = Calendar.query.all()
-    result = calendarInfos_schema.dump(all_calendars)
-    return jsonify(result)
-
-
-# Endpoint for querying a single calendar
-
-@app.route("/calendarInfo/<id>", methods=["GET"])
-def get_calendar(id):
-    calendar = Calendar.query.get(id)
-    return calendarInfo_schema.jsonify(calendar)
-
-
-@app.route('/calendarUpdate/<id>', methods=["PUT"])
-def calendar_update(id):
-    calendar = Calendar.query.get(id)
-    id = request.json['id']
+    calDateID = request.json["calDateID"]
     calDate = request.json['calDate']
     calDateOptions = request.json['calDateOptions']
     booked = request.json['booked']
 
-    calendar.id = id
-    calendar.calDate = calDate
-    calendar.calDateOptions = calDateOptions
-    calendar.booked = booked
+    new_calendar = Calendar(calDate, calDateID, calDateOptions, booked)
 
-    db.session.commit()
-    return calendarInfo_schema.jsonify(calendar)
+    # db.create(new_calendar)
+    new_calendar.save()
 
+    # calendar = Calendar.query.get(new_calendar.id)
 
-@app.route("/calendarDelete/<id>", methods=["DELETE"])
-def calendar_delete(id):
-    calendar = Calendar.query.get(id)
-    db.session.delete(calendar)
-    db.session.commit()
-
-    return "Calendar was successfully deleted"
+    return calendarInfo_schema.jsonify(new_calendar)
 
 
 if __name__ == '__main__':
