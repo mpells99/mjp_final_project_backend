@@ -1,3 +1,4 @@
+from enum import unique
 from flask import Flask, request, jsonify
 from flask_mongoengine import *
 from flask_marshmallow import Marshmallow
@@ -10,17 +11,18 @@ db.disconnect()
 db.connect(host="mongodb://127.0.0.1:27017/capstone-project")
 
 
-class Calendar(db.DynamicDocument):
-    calDateid = db.StringField(max_length=50)
+class Calendar(DynamicDocument):
+    calDateID = db.IntField(unique=True)
     calDate = db.StringField(max_length=50)
     calDateOptions = db.StringField(max_length=50)
     booked = db.StringField(max_length=50)
 
-    # def __init__(self, calDate, calDateID, calDateOptions, booked):
+    # def __init__(self, calDate, id, calDateOptions, booked):
     #     self.calDate = calDate
-    #     self.calDateID = calDateID
+    #     self.id = id
     #     self.calDateOptions = calDateOptions
     #     self.booked = booked
+
     def __init__(self, calDate, calDateID, calDateOptions, booked) -> None:
         super().__init__()
         self.calDate = calDate
@@ -34,30 +36,32 @@ class CalendarSchema(ma.Schema):
         fields = ('calDate', 'calDateID', 'calDateOptions', 'booked')
 
 
-calendarInfo_schema = CalendarSchema()
-calendarInfos_schema = CalendarSchema(many=True)
+# calendarInfo_schema = CalendarSchema()
+# calendarInfos_schema = CalendarSchema(many=True)
 
-
-# db.create()
 
 # create
 
 
 @app.route('/calendar', methods=["POST"])
 def add_calendar():
+
     calDateID = request.json["calDateID"]
     calDate = request.json['calDate']
     calDateOptions = request.json['calDateOptions']
     booked = request.json['booked']
-
     new_calendar = Calendar(calDate, calDateID, calDateOptions, booked)
 
-    # db.create(new_calendar)
     new_calendar.save()
 
-    # calendar = Calendar.query.get(new_calendar.id)
+    return jsonify(new_calendar)
 
-    return calendarInfo_schema.jsonify(new_calendar)
+
+@app.route('/calendarInfo/<myid>', methods=["GET"])
+def get_calendar(myid):
+    calendar = Calendar.objects(calDateID=myid)
+
+    return jsonify(calendar)
 
 
 if __name__ == '__main__':
