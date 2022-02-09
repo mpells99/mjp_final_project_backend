@@ -64,5 +64,13 @@ def get_calendar(myid):
     return jsonify(calendar)
 
 
+@app.route('/calendarDelete/<myid>', methods=["DELETE"])
+def delete_calendar(myid):
+    calendar = Calendar.objects(calDateID=myid)
+    calendar.delete()
+
+    return "Your calendar was deleted"
+
+
 if __name__ == '__main__':
     app.run(debug=True)
