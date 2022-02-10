@@ -2,6 +2,7 @@ from enum import unique
 from flask import Flask, request, jsonify
 from flask_mongoengine import *
 from flask_marshmallow import Marshmallow
+import json
 
 
 app = Flask(__name__)
@@ -59,8 +60,8 @@ def add_calendar():
 
 @app.route('/calendarInfo/<myid>', methods=["GET"])
 def get_calendar(myid):
-    calendar = Calendar.objects(calDateID=myid)
-
+    calendar = Calendar.objects(
+        calDateID=myid).as_pymongo().fields(_id=0).first()
     return jsonify(calendar)
 
 
@@ -69,7 +70,19 @@ def delete_calendar(myid):
     calendar = Calendar.objects(calDateID=myid)
     calendar.delete()
 
-    return "Your calendar was deleted"
+    return "Your calendar entry was deleted"
+
+
+@app.route('/calendarUpdate/<myid>', methods=["PUT"])
+def update_calendar(myid):
+    calendar = Calendar.objects(
+        calDateID=myid).fields(_id=0)
+    calendar.update(calDateID=request.json["calDateID"],
+                    calDate=request.json['calDate'],
+                    calDateOptions=request.json['calDateOptions'],
+                    booked=request.json['booked'])
+
+    return "Your calendar entry was updated"
 
 
 if __name__ == '__main__':
