@@ -9,6 +9,7 @@ flask_cors = "*"
 flask-sqlalchemy = "*"
 flask-marshmallow = "*"
 marshmallow-sqlalchemy = "*"
+flask_mongoengine = "*"
 
 [dev-packages]
 
