@@ -115,4 +115,4 @@ def update_calendar(myid):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='mjs-capstone-project-backend.herokuapp.com', port=80)
