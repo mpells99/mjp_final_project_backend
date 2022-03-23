@@ -112,3 +112,7 @@ def update_calendar(myid):
                     address=request.json['address'])
 
     return "Your calendar entry was updated"
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
