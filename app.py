@@ -1,15 +1,20 @@
 from enum import unique
+from unicodedata import name
 from flask import Flask, request, jsonify
 from flask_mongoengine import *
 from flask_marshmallow import Marshmallow
-import json
+from flask_cors import CORS, cross_origin
+import os
 
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 db = MongoEngine(app)
 ma = Marshmallow(app)
 db.disconnect()
-db.connect(host="mongodb://127.0.0.1:27017/capstone-project")
+db.connect(
+    host=f'mongodb+srv://{os.environ.get("usrnm")}:{os.environ.get("passwrd")}@mycapstoneproject.zqef0.mongodb.net/myFirstDatabase?retryWrites=true&w=majority')
 
 
 class Calendar(DynamicDocument):
@@ -17,6 +22,10 @@ class Calendar(DynamicDocument):
     calDate = db.StringField(max_length=50)
     calDateOptions = db.StringField(max_length=50)
     booked = db.StringField(max_length=50)
+    name = db.StringField(max_lenth=50)
+    phone = db.StringField(max_lenth=50)
+    email = db.StringField(max_lenth=50)
+    address = db.StringField(max_lenth=50)
 
     # def __init__(self, calDate, id, calDateOptions, booked):
     #     self.calDate = calDate
@@ -24,17 +33,30 @@ class Calendar(DynamicDocument):
     #     self.calDateOptions = calDateOptions
     #     self.booked = booked
 
-    def __init__(self, calDate, calDateID, calDateOptions, booked) -> None:
+    def __init__(self,
+                 calDate,
+                 calDateID,
+                 calDateOptions,
+                 booked,
+                 name,
+                 phone,
+                 email,
+                 address) -> None:
         super().__init__()
         self.calDate = calDate
         self.calDateID = calDateID
         self.calDateOptions = calDateOptions
         self.booked = booked
+        self.name = name
+        self.phone = phone
+        self.email = email
+        self.address = address
 
 
 class CalendarSchema(ma.Schema):
     class Meta:
-        fields = ('calDate', 'calDateID', 'calDateOptions', 'booked')
+        fields = ('calDate', 'calDateID', 'calDateOptions',
+                  'booked', 'name', 'phone', 'email', 'address')
 
 
 # calendarInfo_schema = CalendarSchema()
@@ -43,7 +65,7 @@ class CalendarSchema(ma.Schema):
 
 # create
 
-
+@cross_origin()
 @app.route('/calendar', methods=["POST"])
 def add_calendar():
 
@@ -51,7 +73,12 @@ def add_calendar():
     calDate = request.json['calDate']
     calDateOptions = request.json['calDateOptions']
     booked = request.json['booked']
-    new_calendar = Calendar(calDate, calDateID, calDateOptions, booked)
+    name = request.json['name']
+    email = request.json['email']
+    phone = request.json['phone']
+    address = request.json['address']
+    new_calendar = Calendar(
+        calDate, calDateID, calDateOptions, booked, name, email, phone, address)
 
     new_calendar.save()
 
@@ -80,7 +107,11 @@ def update_calendar(myid):
     calendar.update(calDateID=request.json["calDateID"],
                     calDate=request.json['calDate'],
                     calDateOptions=request.json['calDateOptions'],
-                    booked=request.json['booked'])
+                    booked=request.json['booked'],
+                    name=request.json["name"],
+                    email=request.json['email'],
+                    phone=request.json['phone'],
+                    address=request.json['address'])
 
     return "Your calendar entry was updated"
 
