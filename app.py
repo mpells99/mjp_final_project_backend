@@ -64,6 +64,16 @@ class CalendarSchema(ma.Schema):
 # create
 
 @cross_origin()
+@app.route('/auth', methods=["POST"])
+def authLogin():
+    authAdminUser = request.json["authAdminUser"]
+    authAdminPsswrd = request.json['authAdminPsswrd']
+    if authAdminUser == os.environ.get("AdminUser") and authAdminPsswrd == os.environ.get("AdminPsswrd"):
+        return "true"
+    else:
+        return "false"
+
+
 @app.route('/calendar', methods=["POST"])
 def add_calendar():
 
@@ -81,6 +91,12 @@ def add_calendar():
     new_calendar.save()
 
     return jsonify(new_calendar)
+
+
+@app.route("/getCalendars", methods=["GET"])
+def get_guides():
+    calendar = Calendar.objects().as_pymongo()
+    return jsonify(calendar)
 
 
 @app.route('/calendarInfo/<myid>', methods=["GET"])
@@ -115,4 +131,4 @@ def update_calendar(myid):
 
 
 if __name__ == '__main__':
-    app.run(host='mjs-capstone-project-backend.herokuapp.com', port=80)
+    app.run(debug=True)
